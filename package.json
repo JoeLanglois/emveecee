@@ -1,6 +1,6 @@
 {
   "name": "@jdlanglois/emveecee",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "A tiny closure-first controller and router library for single-page applications.",
   "keywords": [
     "spa",
@@ -21,13 +21,19 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./view": {
+      "types": "./dist/view.d.ts",
+      "import": "./dist/view.js",
+      "require": "./dist/view.cjs"
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts --clean --minify",
+    "build": "tsup",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
+    "size:view": "npm run build && node scripts/report-size.mjs dist/view.js",
     "prepublishOnly": "npm run typecheck && npm test && npm run build"
   },
   "devDependencies": {

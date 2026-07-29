@@ -317,9 +317,56 @@ calling application services, or navigating directly. Intent-oriented callback
 names such as `onIncrement` and `onSave` also keep views independent of whether
 an action came from a click, keyboard shortcut, or another UI event.
 
+### Hiccup-style view
+
+The optional `@jdlanglois/emveecee/view` entry renders array-based views and
+diffs later renders against the current DOM:
+
+```ts
+import { render } from "@jdlanglois/emveecee/view";
+
+render([
+  "section#counter.panel",
+  { "aria-live": "polite" },
+  ["p", `Count: ${count}`],
+  items.map(item => ["span.item", { key: item.id }, item.label]),
+  null,
+  ["button", { onClick: increment }, "Increment"],
+], target);
+```
+
+The optional attributes object follows the selector. Nested child arrays are
+flattened, and `null`, `undefined`, and `false` children are omitted. Reusing the
+same target preserves compatible elements while updating attributes, event
+listeners, text, and children.
+
+Attributes are optional. For efficient list updates, put a stable scalar `key`
+on each child. Alternatively, put a key function on the parent attributes:
+
+```ts
+render(["ul", { key: attrs => Number(attrs.id) },
+  ...items.map(item => ["li", { id: item.id }, item.label]),
+], target);
+```
+
+Keyed reconciliation moves existing DOM nodes when items are reordered and only
+creates or removes nodes for inserted or deleted keys. Keys must be unique among
+siblings and are not emitted as HTML attributes.
+
+#### Size
+
+The ESM view entry is **3,692 B (3.61 KiB) minified** and **1,628 B (1.59 KiB)
+minified+gzip**. These figures measure the complete `dist/view.js` produced by
+the current build. Rebuild and refresh the measurement with:
+
+```sh
+npm run size:view
+```
+
 ## Philosophy
 
-- No view layer: use React, jQuery, templates, or direct DOM manipulation.
+- View-library agnostic: use the optional Hiccup renderer, React, templates, or
+  direct DOM manipulation.
 - No model abstraction: ordinary JavaScript objects are enough.
 - No automatic rendering: controllers decide when views are rendered.
 - No classes or inheritance: applications and controllers are closures.
