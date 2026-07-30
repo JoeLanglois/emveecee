@@ -1,4 +1,4 @@
-# emveecee
+# @jdlanglois/spa
 
 A tiny, closure-first TypeScript library for single-page applications. It owns
 routing and controller lifecycles, while your application owns its state,
@@ -7,14 +7,14 @@ models, services, and rendering technology.
 ## Install
 
 ```sh
-npm install @jdlanglois/emveecee
+npm install @jdlanglois/spa
 ```
 
 ## Usage
 
 ```ts
-import { createApp } from "@jdlanglois/emveecee";
-import type { Controller } from "@jdlanglois/emveecee";
+import { createApp } from "@jdlanglois/spa";
+import type { Controller } from "@jdlanglois/spa";
 
 type AppDeps = {
   someService: SomeService;
@@ -60,7 +60,7 @@ const dashboardCtrl = app => ({
 TypeScript users who prefer contextual typing can optionally use `ctrl()`:
 
 ```ts
-import { ctrl } from "@jdlanglois/emveecee";
+import { ctrl } from "@jdlanglois/spa";
 
 const dashboardCtrl = ctrl<AppDeps>(app => ({
   load() {
@@ -319,11 +319,11 @@ an action came from a click, keyboard shortcut, or another UI event.
 
 ### Hiccup-style view
 
-The optional `@jdlanglois/emveecee/view` entry renders array-based views and
-diffs later renders against the current DOM:
+The companion view library is published separately as `@jdlanglois/view`. Its
+main entry renders array-based views and diffs later renders against the DOM:
 
 ```ts
-import { render } from "@jdlanglois/emveecee/view";
+import { render } from "@jdlanglois/view";
 
 render([
   "section#counter.panel",
@@ -353,15 +353,47 @@ Keyed reconciliation moves existing DOM nodes when items are reordered and only
 creates or removes nodes for inserted or deleted keys. Keys must be unique among
 siblings and are not emitted as HTML attributes.
 
+#### One-off DOM creation
+
+Use the standalone `@jdlanglois/view/dom` entry when an element only needs to be created
+once and does not need rendering state or diffing:
+
+```ts
+import { dom } from "@jdlanglois/view/dom";
+
+const button = dom([
+  "button#save.primary",
+  { type: "button", onClick: save },
+  ["span.icon", "✓"],
+  " Save",
+]);
+
+document.querySelector("#toolbar")!.append(button);
+```
+
+For a single element view, `dom()` returns a detached `Element`. A primitive
+returns a `Text` node, while multiple root views or an empty value return a
+`DocumentFragment`. Attributes are optional; nested arrays and null values work
+the same way as in `render()`. The standalone entry contains no render cache,
+keyed reconciliation, or diffing code.
+
+#### Server rendering
+
+The DOM-free server entry renders the same arrays to safely escaped HTML:
+
+```ts
+import { html } from "@jdlanglois/view/server";
+
+const output = html(["article.card", ["h1", title], ["p", body]]);
+```
+
+Event handlers and keys are omitted. Text and attribute values are escaped,
+boolean and style attributes are supported, and void elements use HTML syntax.
+
 #### Size
 
-The ESM view entry is **3,692 B (3.61 KiB) minified** and **1,628 B (1.59 KiB)
-minified+gzip**. These figures measure the complete `dist/view.js` produced by
-the current build. Rebuild and refresh the measurement with:
-
-```sh
-npm run size:view
-```
+See the [`@jdlanglois/view` repository](https://github.com/JoeLanglois/view)
+for current bundle sizes, complete API documentation, and development commands.
 
 ## Philosophy
 
