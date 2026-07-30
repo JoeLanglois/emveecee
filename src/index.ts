@@ -1,4 +1,4 @@
-export { createApp } from "./app";
+export { spa } from "./app";
 export { ctrl } from "./controller";
 export type {
   Application,

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createApp, ctrl } from "../src";
+import { spa, ctrl } from "../src";
 import type { Controller } from "../src";
 
 type Deps = {
@@ -19,7 +19,7 @@ describe("application", () => {
       },
     }));
 
-    const app = createApp<Deps>(({ router }) => {
+    const app = spa<Deps>(({ router }) => {
       router.route("/", home);
       return { greeting: "Hello world!" };
     });
@@ -32,7 +32,7 @@ describe("application", () => {
   it("provides decoded parameters and query values", async () => {
     const load = vi.fn();
     const product: Controller<Deps> = () => ({ load });
-    const app = createApp<Deps>(({ router }) => {
+    const app = spa<Deps>(({ router }) => {
       router.route("/products/:id", product);
       router.route("*", () => ({ load() {} }));
       return { greeting: "Hello" };
@@ -58,7 +58,7 @@ describe("application", () => {
       unload,
     });
     const second: Controller<Deps> = () => ({ load() {} });
-    const app = createApp<Deps>(({ router }) => {
+    const app = spa<Deps>(({ router }) => {
       router.route("/", first);
       router.route("/next", second);
       return { greeting: "Hello" };
@@ -75,7 +75,7 @@ describe("application", () => {
 
   it("intercepts explicitly marked same-origin links", async () => {
     const nextLoad = vi.fn();
-    const app = createApp<Deps>(({ router }) => {
+    const app = spa<Deps>(({ router }) => {
       router.route("/", () => ({ load() {} }));
       router.route("/next", () => ({ load: nextLoad }));
       return { greeting: "Hello" };

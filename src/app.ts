@@ -71,7 +71,7 @@ function isRoutableClick(event: MouseEvent): HTMLAnchorElement | undefined {
   return url.origin === window.location.origin ? anchor : undefined;
 }
 
-export function createApp<Deps>(
+export function spa<Deps>(
   setup: (context: ApplicationSetup<Deps>) => Deps,
 ): Application<Deps> {
   const routes: RegisteredRoute<Deps>[] = [];

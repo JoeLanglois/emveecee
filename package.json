@@ -1,6 +1,6 @@
 {
   "name": "@jdlanglois/spa",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A tiny closure-first controller and router library for single-page applications.",
   "keywords": [
     "spa",

@@ -13,7 +13,7 @@ npm install @jdlanglois/spa
 ## Usage
 
 ```ts
-import { createApp } from "@jdlanglois/spa";
+import { spa } from "@jdlanglois/spa";
 import type { Controller } from "@jdlanglois/spa";
 
 type AppDeps = {
@@ -33,7 +33,7 @@ const dashboardCtrl: Controller<AppDeps> = app => {
   return { load, unload };
 };
 
-const app = createApp<AppDeps>(({ router }) => {
+const app = spa<AppDeps>(({ router }) => {
   router.route("/", dashboardCtrl);
 
   return {
