@@ -5,9 +5,13 @@ export type {
   ApplicationSetup,
   Controller,
   ControllerApp,
+  ControllerClass,
+  ControllerFunction,
   ControllerLifecycle,
   NavigateOptions,
   Route,
+  RouteTable,
   RouteParams,
   Router,
+  Routes,
 } from "./types";

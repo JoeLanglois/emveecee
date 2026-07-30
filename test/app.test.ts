@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { spa, ctrl } from "../src";
-import type { Controller } from "../src";
+import type { Controller, ControllerApp, Route } from "../src";
 
 type Deps = {
   greeting: string;
@@ -19,8 +19,8 @@ describe("application", () => {
       },
     }));
 
-    const app = spa<Deps>(({ router }) => {
-      router.route("/", home);
+    const app = spa<Deps>(({ routes }) => {
+      routes({ "/": home });
       return { greeting: "Hello world!" };
     });
 
@@ -32,9 +32,11 @@ describe("application", () => {
   it("provides decoded parameters and query values", async () => {
     const load = vi.fn();
     const product: Controller<Deps> = () => ({ load });
-    const app = spa<Deps>(({ router }) => {
-      router.route("/products/:id", product);
-      router.route("*", () => ({ load() {} }));
+    const app = spa<Deps>(({ routes }) => {
+      routes({
+        "/products/:id": product,
+        "*": () => ({ load() {} }),
+      });
       return { greeting: "Hello" };
     });
 
@@ -58,9 +60,8 @@ describe("application", () => {
       unload,
     });
     const second: Controller<Deps> = () => ({ load() {} });
-    const app = spa<Deps>(({ router }) => {
-      router.route("/", first);
-      router.route("/next", second);
+    const app = spa<Deps>(({ routes }) => {
+      routes({ "/": first, "/next": second });
       return { greeting: "Hello" };
     });
 
@@ -75,9 +76,11 @@ describe("application", () => {
 
   it("intercepts explicitly marked same-origin links", async () => {
     const nextLoad = vi.fn();
-    const app = spa<Deps>(({ router }) => {
-      router.route("/", () => ({ load() {} }));
-      router.route("/next", () => ({ load: nextLoad }));
+    const app = spa<Deps>(({ routes }) => {
+      routes({
+        "/": () => ({ load() {} }),
+        "/next": () => ({ load: nextLoad }),
+      });
       return { greeting: "Hello" };
     });
     const link = document.createElement("a");
@@ -90,6 +93,37 @@ describe("application", () => {
 
     await vi.waitFor(() => expect(nextLoad).toHaveBeenCalledOnce());
     expect(window.location.pathname).toBe("/next");
+    await app.stop();
+  });
+
+  it("constructs class controllers with the application and runs their lifecycle", async () => {
+    const unload = vi.fn();
+
+    class SettingsController {
+      constructor(private readonly app: ControllerApp<Deps>) {}
+
+      load(route: Route) {
+        this.app.target.textContent = `${this.app.deps.greeting} ${route.path}`;
+      }
+
+      unload() {
+        unload();
+      }
+    }
+
+    const app = spa<Deps>(({ routes }) => {
+      routes({
+        "/": () => ({ load() {} }),
+        "/settings": SettingsController,
+      });
+      return { greeting: "Hello" };
+    });
+
+    app.start(document.body);
+    await app.navigate("/settings");
+    expect(document.body.textContent).toBe("Hello /settings");
+    await app.navigate("/");
+    expect(unload).toHaveBeenCalledOnce();
     await app.stop();
   });
 });

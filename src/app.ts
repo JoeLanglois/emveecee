@@ -3,10 +3,13 @@ import type {
   ApplicationSetup,
   Controller,
   ControllerApp,
+  ControllerClass,
+  ControllerFunction,
   ControllerLifecycle,
   NavigateOptions,
   Route,
   Router,
+  Routes,
   RouteParams,
 } from "./types";
 
@@ -74,18 +77,13 @@ function isRoutableClick(event: MouseEvent): HTMLAnchorElement | undefined {
 export function spa<Deps>(
   setup: (context: ApplicationSetup<Deps>) => Deps,
 ): Application<Deps> {
-  const routes: RegisteredRoute<Deps>[] = [];
+  const registeredRoutes: RegisteredRoute<Deps>[] = [];
   let target: HTMLElement | undefined;
   let active: ActiveController | undefined;
   let started = false;
   let transition = 0;
 
-  const router: Router<Deps> = {
-    route(pattern, controller) {
-      routes.push({ controller, match: compilePattern(pattern) });
-      return router;
-    },
-
+  const router: Router = {
     async navigate(path, options = {}) {
       ensureStarted();
       const url = new URL(path, window.location.href);
@@ -101,7 +99,13 @@ export function spa<Deps>(
     },
   };
 
-  const deps = setup({ router });
+  const routes: Routes<Deps> = table => {
+    for (const [pattern, controller] of Object.entries(table)) {
+      registeredRoutes.push({ controller, match: compilePattern(pattern) });
+    }
+  };
+
+  const deps = setup({ routes });
 
   const app: Application<Deps> = {
     get target() {
@@ -152,7 +156,7 @@ export function spa<Deps>(
 
     let registered: RegisteredRoute<Deps> | undefined;
     let params: RouteParams | undefined;
-    for (const candidate of routes) {
+    for (const candidate of registeredRoutes) {
       const candidateParams = candidate.match(url.pathname);
       if (candidateParams !== undefined) {
         registered = candidate;
@@ -167,7 +171,7 @@ export function spa<Deps>(
 
     const abort = new AbortController();
     const controllerApp: ControllerApp<Deps> = app;
-    const lifecycle = registered.controller(controllerApp);
+    const lifecycle = createController(registered.controller, controllerApp);
     active = { lifecycle, abort };
 
     const route: Route = {
@@ -196,4 +200,15 @@ export function spa<Deps>(
   }
 
   return app;
+}
+
+function createController<Deps>(
+  controller: Controller<Deps>,
+  app: ControllerApp<Deps>,
+): ControllerLifecycle {
+  const controllerClass = controller as ControllerClass<Deps>;
+  if (typeof controllerClass.prototype?.load === "function") {
+    return new controllerClass(app);
+  }
+  return (controller as ControllerFunction<Deps>)(app);
 }

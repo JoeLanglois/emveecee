@@ -1,7 +1,7 @@
 import type {
-  Controller,
+  ControllerFunction,
 } from "./types";
 
-export function ctrl<Deps>(controller: Controller<Deps>): Controller<Deps> {
+export function ctrl<Deps>(controller: ControllerFunction<Deps>): ControllerFunction<Deps> {
   return controller;
 }

@@ -14,7 +14,7 @@ npm install @jdlanglois/spa
 
 ```ts
 import { spa } from "@jdlanglois/spa";
-import type { Controller } from "@jdlanglois/spa";
+import type { Controller, ControllerApp, Route } from "@jdlanglois/spa";
 
 type AppDeps = {
   someService: SomeService;
@@ -33,8 +33,8 @@ const dashboardCtrl: Controller<AppDeps> = app => {
   return { load, unload };
 };
 
-const app = spa<AppDeps>(({ router }) => {
-  router.route("/", dashboardCtrl);
+const app = spa<AppDeps>(({ routes }) => {
+  routes({ "/": dashboardCtrl });
 
   return {
     someService: new SomeService(),
@@ -44,8 +44,9 @@ const app = spa<AppDeps>(({ router }) => {
 app.start(document.body);
 ```
 
-Each route activation creates a new controller closure. Put page-local state in
-that closure and application-wide state or services in `app.deps`.
+Each route activation creates a new closure controller lifecycle or class
+controller instance. Put page-local state there and application-wide state or
+services in `app.deps`.
 
 Controllers are ordinary functions. JavaScript needs no helper:
 
@@ -85,8 +86,14 @@ const productCtrl: Controller<AppDeps> = app => ({
   },
 }));
 
-router.route("/products/:id", productCtrl);
-router.route("*", notFoundCtrl);
+const app = spa<AppDeps>(({ routes }) => {
+  routes({
+    "/products/:id": productCtrl,
+    "*": notFoundCtrl,
+  });
+
+  return { someService: new SomeService() };
+});
 ```
 
 The route passed to `load()` contains:
@@ -95,6 +102,33 @@ The route passed to `load()` contains:
 - `params`: decoded named path parameters
 - `query`: the native `URLSearchParams`
 - `signal`: aborted when the controller is left
+
+### Class controllers
+
+Routes also accept controller classes. A new instance is constructed for each
+activation, with the application passed to its constructor:
+
+```ts
+class SettingsCtrl {
+  constructor(private readonly app: ControllerApp<AppDeps>) {}
+
+  async load(route: Route) {
+    const settings = await this.app.deps.someService.getSettings({
+      signal: route.signal,
+    });
+    this.app.target.textContent = settings.title;
+  }
+
+  unload() {
+    this.app.target.replaceChildren();
+  }
+}
+
+const app = spa<AppDeps>(({ routes }) => {
+  routes({ "/settings": SettingsCtrl });
+  return { someService: new SomeService() };
+});
+```
 
 Navigate programmatically with `app.navigate("/products/42")`. Links marked
 with `data-route` are handled through the History API:

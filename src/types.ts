@@ -20,21 +20,28 @@ export interface ControllerLifecycle {
 export interface ControllerApp<Deps> {
   readonly target: HTMLElement;
   readonly deps: Deps;
-  readonly router: Router<Deps>;
+  readonly router: Router;
   navigate(path: string, options?: NavigateOptions): Promise<void>;
 }
 
-export type Controller<Deps> = (
+export type ControllerFunction<Deps> = (
   app: ControllerApp<Deps>,
 ) => ControllerLifecycle;
 
-export interface Router<Deps> {
-  route(pattern: string, controller: Controller<Deps>): Router<Deps>;
+export interface ControllerClass<Deps> {
+  new(app: ControllerApp<Deps>): ControllerLifecycle;
+}
+
+export type Controller<Deps> = ControllerFunction<Deps> | ControllerClass<Deps>;
+export type RouteTable<Deps> = Readonly<Record<string, Controller<Deps>>>;
+export type Routes<Deps> = (table: RouteTable<Deps>) => void;
+
+export interface Router {
   navigate(path: string, options?: NavigateOptions): Promise<void>;
 }
 
 export interface ApplicationSetup<Deps> {
-  readonly router: Router<Deps>;
+  readonly routes: Routes<Deps>;
 }
 
 export interface Application<Deps> extends ControllerApp<Deps> {
